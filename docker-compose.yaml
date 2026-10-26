@@ -1,0 +1,16 @@
+services:
+  php:
+    build: ./docker/php
+    command: sh -c "composer install && chmod -R 777 var && php-fpm"
+    volumes:
+      - .:/var/www/html
+
+  apache:
+    build: ./docker/apache
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/apache/vhost.conf:/usr/local/apache2/conf/extra/vhost.conf
+    depends_on:
+      - php
