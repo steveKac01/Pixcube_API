@@ -1,7 +1,7 @@
 services:
   php:
     build: ./docker/php
-    command: sh -c "composer install && chmod -R 777 var && php-fpm"
+    command: sh -c "composer install && php bin/console lexik:jwt:generate-keypair --skip-if-exists && chmod -R 777 var && chmod -R a+rX config/jwt && php-fpm"
     volumes:
       - .:/var/www/html
 
