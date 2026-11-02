@@ -22,7 +22,7 @@ final class RegisterController extends AbstractController
         UserPasswordHasherInterface $hasher,
         EntityManagerInterface $em
     ): JsonResponse {
-        //User already exists
+
         if ($userRepository->findOneBy(['email' => $dto->email])) {
             return new JsonResponse(['message' => 'Email already used'], Response::HTTP_CONFLICT);
         }
