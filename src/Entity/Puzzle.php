@@ -3,12 +3,12 @@
 namespace App\Entity;
 
 use App\Repository\PuzzleRepository;
-use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PuzzleRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class Puzzle
 {
     #[ORM\Id]
@@ -158,11 +158,10 @@ class Puzzle
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    #[ORM\PreUpdate]
+    public function touch(): void
     {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     /**

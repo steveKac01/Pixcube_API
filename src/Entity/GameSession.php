@@ -4,13 +4,13 @@ namespace App\Entity;
 
 use App\Enum\GameStatus;
 use App\Repository\GameSessionRepository;
-use DateTimeImmutable;
 use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: GameSessionRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class GameSession
 {
     #[ORM\Id]
@@ -112,6 +112,12 @@ class GameSession
     public function getUpdatedAt(): ?\DateTimeImmutable
     {
         return $this->updatedAt;
+    }
+
+    #[ORM\PreUpdate]
+    public function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getPuzzle(): ?Puzzle
