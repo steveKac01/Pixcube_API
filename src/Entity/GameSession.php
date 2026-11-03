@@ -42,6 +42,7 @@ class GameSession
     private ?Puzzle $puzzle = null;
 
     #[ORM\ManyToOne(inversedBy: 'gameSessions')]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
     private ?User $user = null;
 
     public function __construct()
