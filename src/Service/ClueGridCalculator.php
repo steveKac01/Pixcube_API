@@ -8,7 +8,7 @@ namespace App\Service;
  * The grid is indexed as $grid[x][y][z]: an empty cell is null, a cube is its hex color.
  * Each line of cells along an axis gets one clue:
  *  - count:  how many cubes the line contains
- *  - groups: how many separate groups of cubes it contains, capped at 3 (3 means "three or more")
+ *  - groups: how many separate groups of cubes it contains, capped at 3 (3 means three or more)
  *
  * Clues are indexed by the two other coordinates:
  *  - x[y][z] for the lines along X
@@ -21,15 +21,15 @@ class ClueGridCalculator
     private const MAX_GROUPS = 3;
 
     /**
-     * @param list<list<list<string|null>>> $grid
+     * @param list<list<list<string|null>>> $grid Solution grid indexed [x][y][z]: null is an empty cell, a string is a cube color
      *
      * @return array{x: list<list<array{count: int, groups: int}>>, y: list<list<array{count: int, groups: int}>>, z: list<list<array{count: int, groups: int}>>}
      */
     public function compute(array $grid): array
     {
-        //Puzzle grid validity check
+        // Puzzle grid validity check
         $sizeX = count($grid);
-        $sizeY =  count($grid[0] ?? []);
+        $sizeY = count($grid[0] ?? []);
         $sizeZ = count($grid[0][0] ?? []);
 
         if (0 === $sizeX || 0 === $sizeY || 0 === $sizeZ) {
@@ -38,7 +38,7 @@ class ClueGridCalculator
 
         $clues = ['x' => [], 'y' => [], 'z' => []];
 
-        // Lines along X axis: one per (y,z)
+        // Lines along X axis: one line per (y,z)
         for ($y = 0; $y < $sizeY; ++$y) {
             for ($z = 0; $z < $sizeZ; ++$z) {
                 $line = [];
@@ -50,7 +50,7 @@ class ClueGridCalculator
         }
 
 
-        // Lines along Y axis: one per (x,z)
+        // Lines along Y axis: one line per (x,z)
         for ($x = 0; $x < $sizeX; ++$x) {
             for ($z = 0; $z < $sizeZ; ++$z) {
                 $line = [];
@@ -62,7 +62,7 @@ class ClueGridCalculator
         }
 
 
-        // Lines along Z axis: one per (x,y), already stored as a line in the grid
+        // Lines along Z axis: one line per (x,y), already stored as a line in the grid
         for ($x = 0; $x < $sizeX; ++$x) {
             for ($y = 0; $y < $sizeY; ++$y) {
                 $clues['z'][$x][$y] = $this->analyseLine($grid[$x][$y]);
@@ -73,6 +73,7 @@ class ClueGridCalculator
     }
 
     /**
+     * Counts the cubes and groups in a line.
      * @param list<string|null> $line
      *
      * @return array{count: int, groups: int}
@@ -90,7 +91,7 @@ class ClueGridCalculator
             if ($isCube) {
                 ++$count;
 
-                // A cube that follows an empty cell (or starts the line) opens a new group
+                // A cube that follows an empty cell opens a new group
                 if (!$previousWasCube) {
                     ++$groups;
                 }
