@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 class ClueGridCalculatorTest extends TestCase
 {
-  private const COLOR = '#ff0000';
+    private const COLOR = '#ff0000';
 
     /**
      * @return iterable<string, array{list<string|null>, int, int}>
@@ -35,7 +35,7 @@ class ClueGridCalculatorTest extends TestCase
     public function testLineClue(array $cells, int $count, int $groups): void
     {
         // A line of cells along X is a grid of size n x 1 x 1
-        $grid = array_map(static fn ($cell) => [[$cell]], $cells);
+        $grid = array_map(static fn($cell) => [[$cell]], $cells);
 
         $clue = (new ClueGridCalculator())->compute($grid)['x'][0][0];
 
@@ -66,5 +66,99 @@ class ClueGridCalculatorTest extends TestCase
         $this->assertSame(0, $clues['x'][0][0]['count']);
         $this->assertSame(0, $clues['y'][0][3]['count']);
         $this->assertSame(0, $clues['z'][0][2]['count']);
+    }
+
+    /**
+     * @return iterable<string, array{array<mixed>}>
+     */
+    public static function emptyGrids(): iterable
+    {
+        yield 'no x' => [[]];
+        yield 'no y' => [[[]]];
+        yield 'no z' => [[[[]]]];
+    }
+
+    /**
+     * @param array<mixed> $grid
+     */
+    #[DataProvider('emptyGrids')]
+    public function testAnEmptyGridIsRejected(array $grid): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+
+        (new ClueGridCalculator())->compute($grid);
+    }
+
+    public function testCluesOfTheTutorialObject(): void
+    {
+        $clues = (new ClueGridCalculator())->compute($this->tutorialGrid());
+
+        // Along X, through (y=1, z=0): [empty, black, black, empty]
+        $this->assertSame(['count' => 2, 'groups' => 1], $clues['x'][1][0]);
+        // Along X, through (y=5, z=1): [red, empty, empty, grey] = two separate groups
+        $this->assertSame(['count' => 2, 'groups' => 2], $clues['x'][5][1]);
+        // Along Y, through (x=0, z=1): six cubes, then an empty cell
+        $this->assertSame(['count' => 6, 'groups' => 1], $clues['y'][0][1]);
+        // Along Y, through (x=3, z=1): seven cubes, the whole line
+        $this->assertSame(['count' => 7, 'groups' => 1], $clues['y'][3][1]);
+        // Along Z, through (x=0, y=5): [empty, red, empty]
+        $this->assertSame(['count' => 1, 'groups' => 1], $clues['z'][0][5]);
+        // Along Z, through (x=0, y=6): nothing at all
+        $this->assertSame(['count' => 0, 'groups' => 0], $clues['z'][0][6]);
+    }
+
+    /**
+     * The tutorial object of the front (4 x 7 x 3), to check the service with real data.
+     *
+     * @return list<list<list<string|null>>>
+     */
+    private function tutorialGrid(): array
+    {
+        $_ = null;
+        $b = '#feee9f';
+        $x = '#000000';
+        $g = '#696969';
+        $l = '#a6a6a6';
+        $z = '#858585';
+        $r = '#fa0000';
+
+        return [
+            [
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $r, $_],
+                [$_, $_, $_],
+            ],
+            [
+                [$_, $b, $b],
+                [$x, $b, $g],
+                [$x, $b, $l],
+                [$x, $b, $g],
+                [$_, $b, $b],
+                [$_, $_, $_],
+                [$_, $_, $_],
+            ],
+            [
+                [$_, $b, $b],
+                [$x, $b, $g],
+                [$x, $b, $l],
+                [$x, $b, $g],
+                [$_, $b, $b],
+                [$_, $_, $_],
+                [$_, $_, $_],
+            ],
+            [
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $b, $b],
+                [$_, $z, $_],
+                [$_, $z, $_],
+            ],
+        ];
     }
 }
