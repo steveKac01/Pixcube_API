@@ -12,9 +12,13 @@ class DestroyCube
     private const MAX_ERRORS = 3;
 
     /**
+     * Undocumented function
+     *
      * @param list<list<list<string|null>>> $solutionGrid grid indexed [x][y][z]: null is an empty cell, a string is a cube color
      * @param  list<list<list<int>>> $playerGrid
+     * @param integer $errorsCount
      * @param array{x:int, y:int, z:int} $cubeSelected
+     * @return MoveOutCome
      */
     public function compute(array $solutionGrid, array $playerGrid, int $errorsCount,  array $cubeSelected): MoveOutCome
     {
@@ -29,8 +33,9 @@ class DestroyCube
             throw new \InvalidArgumentException('The cube selected is out of bound.');
         }
 
-        // Apply game destroy cube rules
-        //The player did a good move
+        // Game destroy cube rules
+
+        //The player destroy an empty cell (good move)
         if (null === $solutionGrid[$x][$y][$z]) {
             $playerGrid[$x][$y][$z] = CubeState::DESTROYED;
 
@@ -64,7 +69,11 @@ class DestroyCube
     }
 
     /**
-     * The player wins when every empty cell of the solution has been destroyed.
+     * The player wins when every null cells of the solution grid has been destroyed.
+     *
+     * @param list<list<list<string|null>>> $solutionGrid grid indexed [x][y][z]: null is an empty cell, a string is a cube color
+     * @param  list<list<list<int>>> $playerGrid
+     * @return boolean true if player win
      */
     private function isVictory(array $solutionGrid, array $playerGrid): bool
     {
