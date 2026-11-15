@@ -18,6 +18,10 @@ class SizeGridCalculator
         $size['y'] = count($grid[0]);
         $size['z'] = count($grid[0][0]);
 
+        if (0 === $size['x'] || 0 === $size['y'] || 0 === $size['z']) {
+            throw new \InvalidArgumentException('The puzzle grid is invalid.');
+        }
+
         return $size;
     }
 }
