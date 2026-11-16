@@ -1,0 +1,38 @@
+[
+  [
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#fa0000", null],
+    [null, null, null]
+  ],
+  [
+    [null, "#feee9f", "#feee9f"],
+    ["#000000", "#feee9f", "#696969"],
+    ["#000000", "#feee9f", "#a6a6a6"],
+    ["#000000", "#feee9f", "#696969"],
+    [null, "#feee9f", "#feee9f"],
+    [null, null, null],
+    [null, null, null]
+  ],
+  [
+    [null, "#feee9f", "#feee9f"],
+    ["#000000", "#feee9f", "#696969"],
+    ["#000000", "#feee9f", "#a6a6a6"],
+    ["#000000", "#feee9f", "#696969"],
+    [null, "#feee9f", "#feee9f"],
+    [null, null, null],
+    [null, null, null]
+  ],
+  [
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#feee9f", "#feee9f"],
+    [null, "#858585", null],
+    [null, "#858585", null]
+  ]
+]
