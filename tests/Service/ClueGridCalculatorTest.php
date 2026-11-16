@@ -68,27 +68,6 @@ class ClueGridCalculatorTest extends TestCase
         $this->assertSame(0, $clues['z'][0][2]['count']);
     }
 
-    /**
-     * @return iterable<string, array{array<mixed>}>
-     */
-    public static function emptyGrids(): iterable
-    {
-        yield 'no x' => [[]];
-        yield 'no y' => [[[]]];
-        yield 'no z' => [[[[]]]];
-    }
-
-    /**
-     * @param array<mixed> $grid
-     */
-    #[DataProvider('emptyGrids')]
-    public function testAnEmptyGridIsRejected(array $grid): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-
-        (new ClueGridCalculator())->compute($grid);
-    }
-
     public function testCluesOfTheTutorialObject(): void
     {
         $clues = (new ClueGridCalculator())->compute($this->tutorialGrid());

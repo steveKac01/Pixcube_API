@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Enum\MoveResult;
 use App\Game\MoveOutCome;
 use App\Game\CubeState;
+use App\Helper\SizeGridCalculator;
 
 class DestroyCube
 {
@@ -23,13 +24,10 @@ class DestroyCube
     public function compute(array $solutionGrid, array $playerGrid, int $errorsCount,  array $cubeSelected): MoveOutCome
     {
         // Check if the move is not OOB from the solution grid
-        $sizeX = count($solutionGrid);
-        $sizeY = count($solutionGrid[0]);
-        $sizeZ = count($solutionGrid[0][0]);
-
+        $gridSize = (new SizeGridCalculator())->compute($solutionGrid);
         ['x' => $x, 'y' => $y, 'z' => $z] = $cubeSelected;
-
-        if ($x < 0 || $x >= $sizeX || $y < 0 || $y >= $sizeY || $z < 0 || $z >= $sizeZ) {
+        
+        if ($x < 0 || $x >= $gridSize['x'] || $y < 0 || $y >= $gridSize['y'] || $z < 0 || $z >= $gridSize['z']) {
             throw new \InvalidArgumentException('The cube selected is out of bound.');
         }
 
