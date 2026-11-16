@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Service;
+use App\Helper\SizeGridCalculator;
 
 /**
  * Turns a puzzle solution grid into the clues shown to the player.
@@ -27,22 +28,15 @@ class ClueGridCalculator
      */
     public function compute(array $grid): array
     {
-        // Puzzle grid validity check
-        $sizeX = count($grid);
-        $sizeY = count($grid[0] ?? []);
-        $sizeZ = count($grid[0][0] ?? []);
-
-        if (0 === $sizeX || 0 === $sizeY || 0 === $sizeZ) {
-            throw new \InvalidArgumentException('The puzzle grid is invalid.');
-        }
+        $size = (new SizeGridCalculator())->compute($grid);
 
         $clues = ['x' => [], 'y' => [], 'z' => []];
 
         // Lines along X axis: one line per (y,z)
-        for ($y = 0; $y < $sizeY; ++$y) {
-            for ($z = 0; $z < $sizeZ; ++$z) {
+        for ($y = 0; $y < $size['y']; ++$y) {
+            for ($z = 0; $z < $size['z']; ++$z) {
                 $line = [];
-                for ($x = 0; $x < $sizeX; ++$x) {
+                for ($x = 0; $x < $size['x']; ++$x) {
                     $line[] = $grid[$x][$y][$z];
                 }
                 $clues['x'][$y][$z] = $this->analyseLine($line);
@@ -51,10 +45,10 @@ class ClueGridCalculator
 
 
         // Lines along Y axis: one line per (x,z)
-        for ($x = 0; $x < $sizeX; ++$x) {
-            for ($z = 0; $z < $sizeZ; ++$z) {
+        for ($x = 0; $x < $size['x']; ++$x) {
+            for ($z = 0; $z < $size['z']; ++$z) {
                 $line = [];
-                for ($y = 0; $y < $sizeY; $y++) {
+                for ($y = 0; $y < $size['y']; $y++) {
                     $line[] = $grid[$x][$y][$z];
                 }
                 $clues['y'][$x][$z] = $this->analyseLine($line);
@@ -63,8 +57,8 @@ class ClueGridCalculator
 
 
         // Lines along Z axis: one line per (x,y), already stored as a line in the grid
-        for ($x = 0; $x < $sizeX; ++$x) {
-            for ($y = 0; $y < $sizeY; ++$y) {
+        for ($x = 0; $x < $size['x']; ++$x) {
+            for ($y = 0; $y < $size['y']; ++$y) {
                 $clues['z'][$x][$y] = $this->analyseLine($grid[$x][$y]);
             }
         }
