@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\GameSession;
 use App\Entity\User;
 use App\Helper\PlayerGridInitiate;
+use App\Mapper\GameResponseMapper;
 use App\Repository\PuzzleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -19,6 +20,7 @@ final class CreateGameController extends AbstractController
     public function index(
         PuzzleRepository $puzzleRepository,
         EntityManagerInterface $em,
+        GameResponseMapper $mapper,
         #[CurrentUser] ?user $user,
         ?int $id = null
     ): JsonResponse {
@@ -45,9 +47,6 @@ final class CreateGameController extends AbstractController
         $em->persist($game);
         $em->flush();
 
-        return new JsonResponse([
-            'gameId' => $game->getId(),
-            'puzzle' => $puzzle->getId()
-        ], Response::HTTP_CREATED);
+        return new JsonResponse( $mapper->map($game), Response::HTTP_CREATED);
     }
 }
