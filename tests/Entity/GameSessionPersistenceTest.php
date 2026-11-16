@@ -26,9 +26,6 @@ class GameSessionPersistenceTest extends KernelTestCase
             ->setName('cubes')
             ->setCategory($category)
             ->setDifficulty(1)
-            ->setSizeX(2)
-            ->setSizeY(2)
-            ->setSizeZ(2)
             ->setObjectGrid([
                 [['#ff0000', null], [null, null]],
                 [[null, null], [null, '#00ff00']],

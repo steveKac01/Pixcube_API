@@ -23,15 +23,6 @@ class Puzzle
     private ?int $difficulty = null;
 
     #[ORM\Column]
-    private ?int $sizeX = null;
-
-    #[ORM\Column]
-    private ?int $sizeY = null;
-
-    #[ORM\Column]
-    private ?int $sizeZ = null;
-
-    #[ORM\Column]
     private array $objectGrid = [];
 
     #[ORM\Column]
@@ -84,42 +75,6 @@ class Puzzle
     public function setDifficulty(int $difficulty): static
     {
         $this->difficulty = $difficulty;
-
-        return $this;
-    }
-
-    public function getSizeX(): ?int
-    {
-        return $this->sizeX;
-    }
-
-    public function setSizeX(int $sizeX): static
-    {
-        $this->sizeX = $sizeX;
-
-        return $this;
-    }
-
-    public function getSizeY(): ?int
-    {
-        return $this->sizeY;
-    }
-
-    public function setSizeY(int $sizeY): static
-    {
-        $this->sizeY = $sizeY;
-
-        return $this;
-    }
-
-    public function getSizeZ(): ?int
-    {
-        return $this->sizeZ;
-    }
-
-    public function setSizeZ(int $sizeZ): static
-    {
-        $this->sizeZ = $sizeZ;
 
         return $this;
     }
