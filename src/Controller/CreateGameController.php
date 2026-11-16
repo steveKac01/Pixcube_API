@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\GameSession;
-use App\Entity\User;
 use App\Helper\PlayerGridInitiate;
 use App\Mapper\GameResponseMapper;
 use App\Repository\PuzzleRepository;
@@ -12,7 +11,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 final class CreateGameController extends AbstractController
 {
@@ -21,7 +19,6 @@ final class CreateGameController extends AbstractController
         PuzzleRepository $puzzleRepository,
         EntityManagerInterface $em,
         GameResponseMapper $mapper,
-        #[CurrentUser] ?user $user,
         ?int $id = null
     ): JsonResponse {
 
