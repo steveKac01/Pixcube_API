@@ -9,7 +9,7 @@ final class TutorialGrid
      *
      * @return array
      */
-    public function load(): array
+    public static function load(): array
     {
         $json = file_get_contents(dirname(__DIR__, 2) . '/src/DataFixtures/tutorial-grid.json');
 
