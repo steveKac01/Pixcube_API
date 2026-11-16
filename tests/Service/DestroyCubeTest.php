@@ -129,7 +129,7 @@ class DestroyCubeTest extends TestCase
     }
 
     /**
-     * The tutorial object of the front (4 x 7 x 3), to check the service with real data.
+     * The tutorial object (4 x 7 x 3), to check the service with real data.
      *
      * @return list<list<list<string|null>>>
      */
