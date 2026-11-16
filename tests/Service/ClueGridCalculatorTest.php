@@ -3,6 +3,7 @@
 namespace App\Tests\Service;
 
 use App\Service\ClueGridCalculator;
+use App\Tests\Support\TutorialGrid;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -70,7 +71,7 @@ class ClueGridCalculatorTest extends TestCase
 
     public function testCluesOfTheTutorialObject(): void
     {
-        $clues = (new ClueGridCalculator())->compute($this->tutorialGrid());
+        $clues = (new ClueGridCalculator())->compute(TutorialGrid::load());
 
         // Along X, through (y=1, z=0): [empty, black, black, empty]
         $this->assertSame(['count' => 2, 'groups' => 1], $clues['x'][1][0]);
@@ -86,58 +87,4 @@ class ClueGridCalculatorTest extends TestCase
         $this->assertSame(['count' => 0, 'groups' => 0], $clues['z'][0][6]);
     }
 
-    /**
-     * The tutorial object of the front (4 x 7 x 3), to check the service with real data.
-     *
-     * @return list<list<list<string|null>>>
-     */
-    private function tutorialGrid(): array
-    {
-        $_ = null;
-        $b = '#feee9f';
-        $x = '#000000';
-        $g = '#696969';
-        $l = '#a6a6a6';
-        $z = '#858585';
-        $r = '#fa0000';
-
-        return [
-            [
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $r, $_],
-                [$_, $_, $_],
-            ],
-            [
-                [$_, $b, $b],
-                [$x, $b, $g],
-                [$x, $b, $l],
-                [$x, $b, $g],
-                [$_, $b, $b],
-                [$_, $_, $_],
-                [$_, $_, $_],
-            ],
-            [
-                [$_, $b, $b],
-                [$x, $b, $g],
-                [$x, $b, $l],
-                [$x, $b, $g],
-                [$_, $b, $b],
-                [$_, $_, $_],
-                [$_, $_, $_],
-            ],
-            [
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $b, $b],
-                [$_, $z, $_],
-                [$_, $z, $_],
-            ],
-        ];
-    }
 }
