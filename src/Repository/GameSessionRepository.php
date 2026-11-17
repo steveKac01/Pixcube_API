@@ -3,6 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\GameSession;
+use App\Entity\Puzzle;
+use App\Entity\User;
+use App\Enum\GameStatus;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,28 +19,37 @@ class GameSessionRepository extends ServiceEntityRepository
         parent::__construct($registry, GameSession::class);
     }
 
-//    /**
-//     * @return GameSession[] Returns an array of GameSession objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('g')
-//            ->andWhere('g.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('g.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    public function findInProgress(User $user, Puzzle $puzzle): ?GameSession
+    {
+        return $this->findOneBy([
+            'user' => $user,
+            'puzzle' => $puzzle,
+            'status' => GameStatus::PLAYING,
+        ]);
+    }
 
-//    public function findOneBySomeField($value): ?GameSession
-//    {
-//        return $this->createQueryBuilder('g')
-//            ->andWhere('g.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    //    /**
+    //     * @return GameSession[] Returns an array of GameSession objects
+    //     */
+    //    public function findByExampleField($value): array
+    //    {
+    //        return $this->createQueryBuilder('g')
+    //            ->andWhere('g.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->orderBy('g.id', 'ASC')
+    //            ->setMaxResults(10)
+    //            ->getQuery()
+    //            ->getResult()
+    //        ;
+    //    }
+
+    //    public function findOneBySomeField($value): ?GameSession
+    //    {
+    //        return $this->createQueryBuilder('g')
+    //            ->andWhere('g.exampleField = :val')
+    //            ->setParameter('val', $value)
+    //            ->getQuery()
+    //            ->getOneOrNullResult()
+    //        ;
+    //    }
 }

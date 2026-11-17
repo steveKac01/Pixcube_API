@@ -5,7 +5,7 @@ namespace App\Tests\Controller;
 use App\Entity\Category;
 use App\Entity\GameSession;
 use App\Entity\Puzzle;
-use App\Entity\User;
+use App\Enum\GameStatus;
 use App\Tests\Support\CreateUser;
 use App\Tests\Support\TutorialGrid;
 use Doctrine\ORM\EntityManagerInterface;
@@ -119,6 +119,70 @@ final class CreateGameControllerTest extends WebTestCase
         $game = $em->find(GameSession::class, $response['gameId']);
 
         $this->assertSame(null, $game->getUser());
+    }
+
+    public function testUserLoggedStartsSamePuzzleTwoTimes(): void
+    {
+        $user = $this->createUser();
+        $token = $this->createToken($user);
+
+        $puzzle = $this->createPuzzle('puzzle test');
+
+        // first request
+        $this->client->request('POST', 'api/games/' . $puzzle->getId(), server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertResponseStatusCodeSame(201);
+
+        // second request (same as the first one)
+        $this->client->request('POST', $puzzle->getId(), server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+        $gameId = $response['gameId'];
+
+        $this->assertResponseStatusCodeSame(200);
+
+        $secondResponse = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame($gameId, $secondResponse['gameId']);
+
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $this->assertSame(1, count($em->getRepository(GameSession::class)->findBy(['user' => $user, 'puzzle' => $puzzle])));
+    }
+
+    public function testGuestStartsSameTutorialPuzzleTwoTimes(): void
+    {
+
+        $this->createPuzzle('tutorial');
+
+        $this->client->request('POST', 'api/games');
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $firstGameId = $response['gameId'];
+
+        $this->client->request('POST', '');
+        $secondResponse = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertNotSame($firstGameId, $secondResponse['gameId']);
+    }
+
+    public function testGuestCreateAPuzzleAlreadyFinished(): void
+    {
+        $user = $this->createUser();
+        $token = $this->createToken($user);
+
+        $puzzle = $this->createPuzzle('puzzle de test');
+
+        $this->client->request('POST', 'api/games/' . $puzzle->getId(), server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        // Set the victory for this game session
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $gameSession = $em->find(GameSession::class, $response['gameId']);
+        $gameSession->setStatus(GameStatus::VICTORY);
+        $em->flush();
+
+
+        $this->client->request('POST', $puzzle->getId(), server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+
+        $this->assertResponseStatusCodeSame(201);
     }
 
     private function createPuzzle(string $slug, bool $isPublished = true): Puzzle
