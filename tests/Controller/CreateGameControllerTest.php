@@ -3,8 +3,10 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Category;
+use App\Entity\GameSession;
 use App\Entity\Puzzle;
 use App\Entity\User;
+use App\Tests\Support\CreateUser;
 use App\Tests\Support\TutorialGrid;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -12,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class CreateGameControllerTest extends WebTestCase
 {
+    use CreateUser;
     private KernelBrowser $client;
 
     protected function setUp(): void
@@ -19,12 +22,12 @@ final class CreateGameControllerTest extends WebTestCase
         $this->client = static::createClient();
     }
 
-    public function testTutorialPuzzleWithoutLogin()
+    public function testTutorialPuzzleWithoutLogin(): void
     {
         $this->createPuzzle('tutorial');
 
         $this->client->request('POST', 'api/games');
-        $response = \json_decode($this->client->getResponse()->getContent(), true);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
 
         $this->assertResponseStatusCodeSame(201);
         $this->assertArrayHasKey('gameId', $response);
@@ -35,14 +38,14 @@ final class CreateGameControllerTest extends WebTestCase
         $this->assertArrayHasKey('playerGrid', $response);
     }
 
-    public function testWithoutTutorialPuzzleInDatabase()
+    public function testUserNotLoggedWithNoTutorialPuzzleInDatabase(): void
     {
         $this->client->request('POST', 'api/games');
 
         $this->assertResponseStatusCodeSame(404);
     }
 
-    public function testWithTutorialPuzzleNotPublished()
+    public function testUserNotLoggedWithTutorialPuzzleNotPublished(): void
     {
         $this->createPuzzle('tutorial', false);
 
@@ -51,7 +54,7 @@ final class CreateGameControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(404);
     }
 
-    public function testPuzzleWithIdWithoutLogin()
+    public function testUserNotLoggedWithPuzzleRequiresLogin(): void
     {
         $puzzle = $this->createPuzzle('test puzzle');
 
@@ -59,17 +62,64 @@ final class CreateGameControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(401);
     }
 
-    public function testRouteWithInvalidId()
+    public function testRouteWithInvalidIdPuzzle(): void
     {
         $this->client->request('POST', 'api/games/invalidId');
         $this->assertResponseStatusCodeSame(404);
     }
 
-    //Un autre puzzle avec token
+    public function testLoggedUserStartsAGameThatBelongsToThem(): void
+    {
+        $user = $this->createUser();
+        $token = $this->createToken($user);
 
-    //Puzzle inconnu avec token
+        $puzzle = $this->createPuzzle('puzzle de test');
 
-    //Puzzle non publié avec token
+        $this->client->request('POST', 'api/games/' . $puzzle->getId(), server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+
+        $this->assertResponseStatusCodeSame(201);
+
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+
+        $game = $em->find(GameSession::class, $response['gameId']);
+
+        $this->assertSame($user->getEmail(), $game->getUser()?->getEmail());
+    }
+
+    public function testUserLoggedTriesUnknownPuzzle(): void
+    {
+        $user = $this->createUser();
+        $token = $this->createToken($user);
+
+        $this->client->request('POST', 'api/games/1', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testUserLoggedWithPuzzleNotPublished(): void
+    {
+        $user = $this->createUser();
+        $token = $this->createToken($user);
+        $puzzle = $this->createPuzzle('puzzle de test', false);
+
+        $this->client->request('POST', 'api/games/' . $puzzle->getId(), server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $token]);
+
+        $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testTutorialPuzzleDoesntHaveOwner(): void
+    {
+        $this->createPuzzle('tutorial');
+
+        $this->client->request('POST', 'api/games');
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+
+        $em = static::getContainer()->get(EntityManagerInterface::class);
+        $game = $em->find(GameSession::class, $response['gameId']);
+
+        $this->assertSame(null, $game->getUser());
+    }
 
     private function createPuzzle(string $slug, bool $isPublished = true): Puzzle
     {
@@ -90,17 +140,5 @@ final class CreateGameControllerTest extends WebTestCase
         $em->flush();
 
         return $puzzle;
-    }
-
-    private function createUser(): User
-    {
-        $user = (new User())->setEmail('user@test.fr')
-            ->setPassword('Password123!');
-
-        $em = static::getContainer()->get(EntityManagerInterface::class);
-        $em->persist($user);
-        $em->flush();
-
-        return $user;
     }
 }
