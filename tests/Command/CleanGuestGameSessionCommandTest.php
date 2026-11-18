@@ -2,11 +2,11 @@
 
 namespace App\Tests\Command;
 
-use App\Entity\Category;
 use App\Entity\GameSession;
 use App\Entity\Puzzle;
 use App\Entity\User;
 use App\Tests\Support\CreateUser;
+use App\Tests\Support\CreatePuzzle;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -17,7 +17,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class CleanGuestGameSessionCommandTest extends KernelTestCase
 {
-    use CreateUser;
+    use CreateUser, createPuzzle;
+
     private const SESSION_OUTDATED = "-16 days";
     private const SESSION_RECENT = "-13 days";
     private EntityManagerInterface $em;
@@ -28,7 +29,7 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
         self::bootKernel();
 
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
-        $this->puzzle = $this->createPuzzle();
+        $this->puzzle = $this->createPuzzle('tutorial',[[[1]]],$this->em);
     }
 
     private function runCommand(): void
@@ -80,6 +81,7 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
             ->setPuzzle($puzzle)
             ->setErrorsCount(0);
 
+        // No setter for updatedAt
         if ($date) {
             $reflection = new \ReflectionProperty(GameSession::class, 'updatedAt');
 
@@ -97,24 +99,5 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
     private function countGameSessions(): int
     {
         return $this->em->getRepository(GameSession::class)->count([]);
-    }
-
-    private function createPuzzle(): Puzzle
-    {
-        $category = (new Category())->setName('Tutorial')
-            ->setSlug('tutorial')
-            ->setDescription('Description test.');
-
-        $puzzle = (new Puzzle())->setDifficulty(1)
-            ->setIsPublished(true)
-            ->setName('une radio')
-            ->setObjectGrid([])
-            ->setCategory($category);
-
-        $this->em->persist($category);
-        $this->em->persist($puzzle);
-        $this->em->flush();
-
-        return $puzzle;
     }
 }
