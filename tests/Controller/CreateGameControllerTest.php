@@ -25,7 +25,7 @@ final class CreateGameControllerTest extends WebTestCase
 
     public function testTutorialPuzzleWithoutLogin(): void
     {
-       $this->createPuzzle('tutorial', $this->testGridPuzzle, $this->em);
+        $this->createPuzzle('tutorial', $this->testGridPuzzle, $this->em);
 
         $this->client->request('POST', 'api/games');
         $response = json_decode($this->client->getResponse()->getContent(), true);
@@ -37,6 +37,8 @@ final class CreateGameControllerTest extends WebTestCase
         $this->assertArrayHasKey('errorsCount', $response);
         $this->assertArrayHasKey('clues', $response);
         $this->assertArrayHasKey('playerGrid', $response);
+        $this->assertArrayNotHasKey('name',$response);
+        $this->assertArrayNotHasKey('objectGrid',$response);
     }
 
     public function testUserNotLoggedWithNoTutorialPuzzleInDatabase(): void

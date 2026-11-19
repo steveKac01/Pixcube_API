@@ -4,9 +4,9 @@ namespace App\Tests\Command;
 
 use App\Entity\GameSession;
 use App\Entity\Puzzle;
-use App\Entity\User;
 use App\Tests\Support\CreateUser;
 use App\Tests\Support\CreatePuzzle;
+use App\Tests\Support\CreateGameSession;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
@@ -15,7 +15,7 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class CleanGuestGameSessionCommandTest extends KernelTestCase
 {
-    use CreateUser, createPuzzle;
+    use CreateUser, createPuzzle, createGameSession;
 
     private DateTimeImmutable $outdated;
     private DateTimeImmutable $recent;
@@ -41,11 +41,12 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
 
     public function testCleanTwoOutdatedGameSession(): void
     {
-
         for ($i = 0; $i < 2; $i++) {
             $this->createGameSession(
                 $this->puzzle,
-                $this->outdated
+                $this->em,
+                $this->outdated,
+                []
             );
         }
 
@@ -57,7 +58,7 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
     public function testDoesNotCleanRecentGameSession(): void
     {
         for ($i = 0; $i < 2; $i++) {
-            $this->createGameSession($this->puzzle, $this->recent);
+            $this->createGameSession($this->puzzle, $this->em, $this->recent, []);
         }
 
         $this->runCommand();
@@ -69,32 +70,10 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
     {
         $user = $this->createUser('user.test@test.fr');
 
-        $this->createGameSession($this->puzzle, $this->outdated, $user);
-        $this->createGameSession($this->puzzle, $this->recent, $user);
+        $this->createGameSession($this->puzzle, $this->em, $this->outdated, [], $user);
+        $this->createGameSession($this->puzzle, $this->em, $this->recent, [], $user);
 
         $this->assertSame(2, $this->countGameSessions());
-    }
-
-    private function createGameSession(Puzzle $puzzle, ?DateTimeImmutable $date = null, ?User $user = null): GameSession
-    {
-        $session = (new GameSession())->setErrorsCount(0)
-            ->setPlayerGrid([])
-            ->setPuzzle($puzzle)
-            ->setErrorsCount(0);
-
-        // No setter for updatedAt
-        if ($date) {
-            $reflection = new \ReflectionProperty(GameSession::class, 'updatedAt');
-
-            $reflection->setValue(
-                $session,
-                $date
-            );
-        }
-        $this->em->persist($session);
-        $this->em->flush();
-
-        return $session;
     }
 
     private function countGameSessions(): int
