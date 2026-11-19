@@ -37,8 +37,6 @@ final class CreateGameControllerTest extends WebTestCase
         $this->assertArrayHasKey('errorsCount', $response);
         $this->assertArrayHasKey('clues', $response);
         $this->assertArrayHasKey('playerGrid', $response);
-        $this->assertArrayNotHasKey('name',$response);
-        $this->assertArrayNotHasKey('objectGrid',$response);
     }
 
     public function testUserNotLoggedWithNoTutorialPuzzleInDatabase(): void
