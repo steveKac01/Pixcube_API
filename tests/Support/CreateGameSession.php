@@ -15,7 +15,8 @@ trait CreateGameSession
     {
         $session = (new GameSession())->setErrorsCount($errorsCount)
             ->setPlayerGrid($playerGrid)
-            ->setPuzzle($puzzle);
+            ->setPuzzle($puzzle)
+            ->setUser($user);
 
         // No setter for updatedAt
         if ($date) {
