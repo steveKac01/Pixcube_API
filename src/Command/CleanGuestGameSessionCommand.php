@@ -7,24 +7,24 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCommand(
     name: 'app:clean-game-session',
-    description: 'Delete all old guest\'s game session.',
+    description: 'Delete all old guests game sessions.',
 )]
 class CleanGuestGameSessionCommand
 {
-    private const TIME_LIMIT = '-2 weeks';
-
     public function __construct(
         private readonly EntityManagerInterface $em,
+        #[Autowire('%app.guest_game_retention_days%')] readonly int $retentionDays,
     ) {}
 
     public function __invoke(
         SymfonyStyle $io,
     ): int {
 
-        $dateLimit = new \DateTimeImmutable($this::TIME_LIMIT);
+        $dateLimit = new \DateTimeImmutable(sprintf('-%d days', $this->retentionDays));
 
         $count =  $this->em->createQueryBuilder()
             ->delete(GameSession::class, 'gs')

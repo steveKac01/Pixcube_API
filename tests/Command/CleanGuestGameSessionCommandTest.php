@@ -11,25 +11,25 @@ use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-
 use Symfony\Component\Console\Tester\CommandTester;
-
 
 class CleanGuestGameSessionCommandTest extends KernelTestCase
 {
     use CreateUser, createPuzzle;
 
-    private const SESSION_OUTDATED = "-16 days";
-    private const SESSION_RECENT = "-13 days";
+    private DateTimeImmutable $outdated;
+    private DateTimeImmutable $recent;
     private EntityManagerInterface $em;
     private Puzzle $puzzle;
 
     protected function setUp(): void
     {
         self::bootKernel();
-
+        $days = static::getContainer()->getParameter('app.guest_game_retention_days');
+        $this->outdated = new DateTimeImmutable(sprintf('-%d days', $days + 1));
+        $this->recent = new DateTimeImmutable(sprintf('-%d days', $days - 1));
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
-        $this->puzzle = $this->createPuzzle('tutorial',[[[1]]],$this->em);
+        $this->puzzle = $this->createPuzzle('tutorial', [[[1]]], $this->em);
     }
 
     private function runCommand(): void
@@ -41,10 +41,11 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
 
     public function testCleanTwoOutdatedGameSession(): void
     {
+
         for ($i = 0; $i < 2; $i++) {
             $this->createGameSession(
                 $this->puzzle,
-                new DateTimeImmutable(self::SESSION_OUTDATED)
+                $this->outdated
             );
         }
 
@@ -56,7 +57,7 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
     public function testDoesNotCleanRecentGameSession(): void
     {
         for ($i = 0; $i < 2; $i++) {
-            $this->createGameSession($this->puzzle, new DateTimeImmutable(self::SESSION_RECENT));
+            $this->createGameSession($this->puzzle, $this->recent);
         }
 
         $this->runCommand();
@@ -68,8 +69,8 @@ class CleanGuestGameSessionCommandTest extends KernelTestCase
     {
         $user = $this->createUser('user.test@test.fr');
 
-        $this->createGameSession($this->puzzle, new DateTimeImmutable(self::SESSION_OUTDATED), $user);
-        $this->createGameSession($this->puzzle, new DateTimeImmutable(self::SESSION_RECENT), $user);
+        $this->createGameSession($this->puzzle, $this->outdated, $user);
+        $this->createGameSession($this->puzzle, $this->recent, $user);
 
         $this->assertSame(2, $this->countGameSessions());
     }
