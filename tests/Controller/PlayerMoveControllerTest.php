@@ -4,6 +4,7 @@ namespace App\Tests\Controller;
 
 use App\Enum\GameStatus;
 use App\Game\CubeState;
+use App\Tests\Support\CreatePlayerGridOneClickToVictory;
 use App\Tests\Support\CreateGameSession;
 use App\Tests\Support\CreatePuzzle;
 use App\Tests\Support\CreateUser;
@@ -16,7 +17,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 final class PlayerMoveControllerTest extends WebTestCase
 {
-    use CreateUser, CreatePuzzle, CreateGameSession;
+    use CreateUser, CreatePuzzle, CreateGameSession, CreatePlayerGridOneClickToVictory;
     private KernelBrowser $client;
     private EntityManagerInterface $em;
 
@@ -179,7 +180,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     {
         $playerMove = ['x' => 0, 'y' => 0, 'z' => 0];
         $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->playerGridOneClickToVictory($puzzle->getObjectGrid(), $playerMove);
+        $playerGrid = $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $playerMove);
         $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
 
         $response = $this->guestRequest($gameSession->getId(),  $playerMove)['result'];
@@ -218,22 +219,4 @@ final class PlayerMoveControllerTest extends WebTestCase
         return $playerGrid;
     }
 
-    private function playerGridOneClickToVictory(array $solutionGrid, array $lastCube): array
-    {
-        $playerGrid = [];
-
-        foreach ($solutionGrid as $x => $slice) {
-            foreach ($slice as $y => $row) {
-                foreach ($row as $z => $ceil) {
-
-                    $playerGrid[$x][$y][$z] = null === $ceil ? CubeState::DESTROYED : CubeState::INTACT;
-                }
-            }
-        }
-
-        //reset the first cube to let win the player on his next move
-        $playerGrid[$lastCube['x']][$lastCube['y']][$lastCube['z']] = CubeState::INTACT;
-
-        return $playerGrid;
-    }
 }
