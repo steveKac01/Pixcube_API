@@ -6,6 +6,7 @@ use App\Dto\Game\PlayerMoveRequest;
 use App\Entity\GameSession;
 use App\Enum\GameStatus;
 use App\Exception\OutOfBoundCubeException;
+use App\Mapper\PlayerMoveResponseMapper;
 use App\Service\DestroyCube;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,7 +24,8 @@ final class PlayerMoveController extends AbstractController
         GameSession $gameSession,
         #[MapRequestPayload] PlayerMoveRequest $playerMoveDTO,
         EntityManagerInterface $em,
-        DestroyCube $destroyCube
+        DestroyCube $destroyCube,
+        PlayerMoveResponseMapper $mapper,
     ): JsonResponse {
 
         // A game that belongs to a user can only be played by this user.
@@ -55,11 +57,16 @@ final class PlayerMoveController extends AbstractController
             throw new UnprocessableEntityHttpException($e->getMessage(), $e);
         }
 
-        //Save $outcome bdd
+        // Apply move outcome and persist
+        $updatedGameSession = $gameSession->applyMoveOutCome($moveOutCome);
+        $em->flush();
+
+        // Map response in dtos (MoveResponse et VictoryMoveResponse).
+        $result = $mapper->map($moveOutCome->moveResult,$updatedGameSession);
 
         //Return response WIP
         return $this->json([
-            'result' => 'ok'
+            'result' => $result
         ]);
     }
 }

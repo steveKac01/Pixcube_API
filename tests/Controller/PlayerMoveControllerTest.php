@@ -26,25 +26,29 @@ final class PlayerMoveControllerTest extends WebTestCase
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
 
-    private function guestRequest(string $gameSessionId, array $moveCoordinate): array
+    private function guestRequest(string $gameSessionId, array $moveCoordinate, ?bool $raw = false): array|string
     {
         $this->client->jsonRequest('POST', '/api/games/' . $gameSessionId . '/moves', $moveCoordinate);
 
-        return $this->getData();
+        return $this->getData($raw);
     }
 
-    private function loggedRequest(string $token, string $gameSessionId, array $moveCoordinate): array
+    private function loggedRequest(string $token, string $gameSessionId, array $moveCoordinate, ?bool $raw = false): array
     {
         $this->client->jsonRequest('POST', '/api/games/' . $gameSessionId . '/moves', $moveCoordinate,  server: [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $token
         ]);
 
-        return $this->getData();
+        return $this->getData($raw);
     }
 
-    private function getData(): array
+    private function getData(?bool $raw): array|string
     {
-        return  json_decode($this->client->getResponse()->getContent(), true);
+        if (!$raw) {
+            return  json_decode($this->client->getResponse()->getContent(), true);
+        }
+
+        return $this->client->getResponse()->getContent();
     }
 
     public function testControllerRejectGetMethod(): void
@@ -153,6 +157,39 @@ final class PlayerMoveControllerTest extends WebTestCase
         $this->assertResponseStatusCodeSame(422);
     }
 
+    public function testOkGameStatusResponseDoesNotLeakInformationPuzzle(): void
+    {
+        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
+        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
+        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
+
+        $rawResponse =  $this->guestRequest($gameSession->getId(), ['x' => 0, 'y' => 1, 'z' => 0], true);
+        $response = \json_decode($rawResponse, true)['result'];
+
+        $this->assertSame(0, $response['errorsCount']);
+        $this->assertSame('ok', $response['result']);
+        // Important ! No solution leak
+        $this->assertArrayNotHasKey('name', $response);
+        $this->assertArrayNotHasKey('objectGrid', $response);
+        $this->assertStringNotContainsString($puzzle->getName(), $rawResponse);
+        $this->assertStringNotContainsString('#', $rawResponse); // the solution is the only place with hex colors
+    }
+
+    public function testVictoryResponseOnPlayerMove(): void
+    {
+        $playerMove = ['x' => 0, 'y' => 0, 'z' => 0];
+        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
+        $playerGrid = $this->playerGridOneClickToVictory($puzzle->getObjectGrid(), $playerMove);
+        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
+
+        $response = $this->guestRequest($gameSession->getId(),  $playerMove)['result'];
+
+        $this->assertSame(0, $response['errorsCount']);
+        $this->assertSame('victory', $response['result']);
+        $this->assertArrayHasKey('name', $response);
+        $this->assertArrayHasKey('objectGrid', $response);
+    }
+
     public static function wrongPlayerMoves(): iterable
     {
         yield 'empty array' => [[]];
@@ -177,6 +214,25 @@ final class PlayerMoveControllerTest extends WebTestCase
                 }
             }
         }
+
+        return $playerGrid;
+    }
+
+    private function playerGridOneClickToVictory(array $solutionGrid, array $lastCube): array
+    {
+        $playerGrid = [];
+
+        foreach ($solutionGrid as $x => $slice) {
+            foreach ($slice as $y => $row) {
+                foreach ($row as $z => $ceil) {
+
+                    $playerGrid[$x][$y][$z] = null === $ceil ? CubeState::DESTROYED : CubeState::INTACT;
+                }
+            }
+        }
+
+        //reset the first cube to let win the player on his next move
+        $playerGrid[$lastCube['x']][$lastCube['y']][$lastCube['z']] = CubeState::INTACT;
 
         return $playerGrid;
     }
