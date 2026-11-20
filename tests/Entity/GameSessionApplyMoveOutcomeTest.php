@@ -5,7 +5,7 @@ namespace App\Tests\Entity;
 use App\Entity\GameSession;
 use App\Enum\GameStatus;
 use App\Enum\MoveResult;
-use App\Game\MoveOutCome;
+use App\Game\MoveOutcome;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -42,7 +42,7 @@ class GameSessionapplyMoveOutcomeTest extends TestCase
         $playerGrid = [[[1]]];
         $gameSession = new GameSession();
 
-        $moveResult = new MoveOutCome(MoveResult::VICTORY, $playerGrid, $errorCount);
+        $moveResult = new MoveOutcome(MoveResult::VICTORY, $playerGrid, $errorCount);
 
         $gameSession->applyMoveOutcome($moveResult);
 

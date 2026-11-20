@@ -4,7 +4,7 @@ namespace App\Service;
 
 use App\Enum\MoveResult;
 use App\Exception\OutOfBoundCubeException;
-use App\Game\MoveOutCome;
+use App\Game\MoveOutcome;
 use App\Game\CubeState;
 use App\Helper\SizeGridCalculator;
 
@@ -20,9 +20,9 @@ class DestroyCube
      * @param  list<list<list<int>>> $playerGrid
      * @param integer $errorsCount
      * @param array{x:int, y:int, z:int} $cubeSelected
-     * @return MoveOutCome
+     * @return MoveOutcome
      */
-    public function compute(array $solutionGrid, array $playerGrid, int $errorsCount,  array $cubeSelected): MoveOutCome
+    public function compute(array $solutionGrid, array $playerGrid, int $errorsCount,  array $cubeSelected): MoveOutcome
     {
         // Check if the move is not OOB from the solution grid
         $gridSize = (new SizeGridCalculator())->compute($solutionGrid);
@@ -38,7 +38,7 @@ class DestroyCube
         if (null === $solutionGrid[$x][$y][$z]) {
             $playerGrid[$x][$y][$z] = CubeState::DESTROYED;
 
-            return new MoveOutCome(
+            return new MoveOutcome(
                 $this->isVictory($solutionGrid, $playerGrid) ?
                     MoveResult::VICTORY : MoveResult::OK,
                 $playerGrid,
@@ -49,7 +49,7 @@ class DestroyCube
         // The move was already done, return the same moveResult without incrementing errorCount (player not penalized)
         $cell = $playerGrid[$x][$y][$z];
         if ($cell !== CubeState::INTACT) {
-            return  new MoveOutCome(
+            return  new MoveOutcome(
                 CubeState::DESTROYED === $cell ?
                     moveResult::OK : MoveResult::ERROR,
                 $playerGrid,
@@ -60,7 +60,7 @@ class DestroyCube
         // Wrong move of the player, the cube is now locked
         $playerGrid[$x][$y][$z] = CubeState::LOCKED;
         $errorsCount++;
-        return new MoveOutCome(
+        return new MoveOutcome(
             $errorsCount >= self::MAX_ERRORS ? MoveResult::GAMEOVER : moveResult::ERROR,
             $playerGrid,
             $errorsCount

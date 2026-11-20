@@ -165,7 +165,7 @@ final class PlayerMoveControllerTest extends WebTestCase
         $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
 
         $rawResponse =  $this->guestRequest($gameSession->getId(), ['x' => 0, 'y' => 1, 'z' => 0], true);
-        $response = \json_decode($rawResponse, true)['result'];
+        $response = \json_decode($rawResponse, true);
 
         $this->assertSame(0, $response['errorsCount']);
         $this->assertSame('ok', $response['result']);
@@ -183,7 +183,7 @@ final class PlayerMoveControllerTest extends WebTestCase
         $playerGrid = $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $playerMove);
         $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
 
-        $response = $this->guestRequest($gameSession->getId(),  $playerMove)['result'];
+        $response = $this->guestRequest($gameSession->getId(),  $playerMove);
 
         $this->assertSame(0, $response['errorsCount']);
         $this->assertSame('victory', $response['result']);

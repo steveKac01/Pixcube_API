@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use App\Enum\GameStatus;
 use App\Enum\MoveResult;
-use App\Game\MoveOutCome;
+use App\Game\MoveOutcome;
 use App\Repository\GameSessionRepository;
 use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -147,9 +147,9 @@ class GameSession
         return $this;
     }
 
-    public function applyMoveOutcome(MoveOutCome $moveOutCome): self
+    public function applyMoveOutcome(MoveOutcome $moveOutcome): self
     {
-        $gameStatus = match ($moveOutCome->moveResult) {
+        $gameStatus = match ($moveOutcome->moveResult) {
             MoveResult::OK, MoveResult::ERROR => GameStatus::PLAYING,
             MoveResult::GAMEOVER => GameStatus::GAMEOVER,
             MoveResult::VICTORY => GameStatus::VICTORY,
@@ -157,8 +157,8 @@ class GameSession
 
 
         $this->setStatus($gameStatus);
-        $this->setPlayerGrid($moveOutCome->playerGrid);
-        $this->setErrorsCount($moveOutCome->errorsCount);
+        $this->setPlayerGrid($moveOutcome->playerGrid);
+        $this->setErrorsCount($moveOutcome->errorsCount);
         if (GameStatus::PLAYING !== $gameStatus) {
             $this->setFinishedAt(new \DateTimeImmutable());
         }
