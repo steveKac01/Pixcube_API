@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Enum\GameStatus;
+use App\Enum\MoveResult;
+use App\Game\MoveOutCome;
 use App\Repository\GameSessionRepository;
 use Symfony\Bridge\Doctrine\IdGenerator\UuidGenerator;
 use Symfony\Bridge\Doctrine\Types\UuidType;
@@ -141,6 +143,25 @@ class GameSession
     public function setUser(?User $user): static
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    public function applyMoveOutcome(MoveOutCome $moveOutCome): self
+    {
+        $gameStatus = match ($moveOutCome->moveResult) {
+            MoveResult::OK, MoveResult::ERROR => GameStatus::PLAYING,
+            MoveResult::GAMEOVER => GameStatus::GAMEOVER,
+            MoveResult::VICTORY => GameStatus::VICTORY,
+        };
+
+
+        $this->setStatus($gameStatus);
+        $this->setPlayerGrid($moveOutCome->playerGrid);
+        $this->setErrorsCount($moveOutCome->errorsCount);
+        if (GameStatus::PLAYING !== $gameStatus) {
+            $this->setFinishedAt(new \DateTimeImmutable());
+        }
 
         return $this;
     }
