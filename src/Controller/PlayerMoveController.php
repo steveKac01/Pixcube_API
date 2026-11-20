@@ -28,10 +28,9 @@ final class PlayerMoveController extends AbstractController
         PlayerMoveResponseMapper $mapper,
     ): JsonResponse {
 
-        // A game that belongs to a user can only be played by this user.
-        // A guest game (no owner) is played with its UUID.
+        // A game that belongs to a user can only be played by this user
+        // A guest game (no owner) is played with its UUID
         $owner = $gameSession->getUser();
-
         if (null !== $owner) {
             $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
 
@@ -40,14 +39,13 @@ final class PlayerMoveController extends AbstractController
             }
         }
 
-        //Game status control
         if (GameStatus::PLAYING !== $gameSession->getStatus()) {
             throw new ConflictHttpException('The game is already over.');
         }
 
-        // hit management
+        // Player move management with destroyCube service
         try {
-            $moveOutCome = $destroyCube->compute(
+            $moveOutcome = $destroyCube->compute(
                 $gameSession->getPuzzle()->getObjectGrid(),
                 $gameSession->getPlayerGrid(),
                 $gameSession->getErrorsCount(),
@@ -57,16 +55,12 @@ final class PlayerMoveController extends AbstractController
             throw new UnprocessableEntityHttpException($e->getMessage(), $e);
         }
 
-        // Apply move outcome and persist
-        $updatedGameSession = $gameSession->applyMoveOutCome($moveOutCome);
+        $gameSession->applymoveOutcome($moveOutcome);
         $em->flush();
 
-        // Map response in dtos (MoveResponse et VictoryMoveResponse).
-        $result = $mapper->map($moveOutCome->moveResult,$updatedGameSession);
-
-        //Return response WIP
-        return $this->json([
-            'result' => $result
-        ]);
+        // Retuns mapped dto
+        return $this->json(
+            $mapper->map($moveOutcome->moveResult, $gameSession)
+        );
     }
 }
