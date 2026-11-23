@@ -32,7 +32,6 @@ class AuthTest extends WebTestCase
             'password' => $password,
         ]);
     }
-
     private function getData(): array
     {
         return json_decode($this->client->getResponse()->getContent(), true);
@@ -82,6 +81,16 @@ class AuthTest extends WebTestCase
 
         $this->assertResponseStatusCodeSame(200);
         $this->assertArrayHasKey('token', $this->getData());
+    }
+
+    public function testLoginRejectGetMethod(): void
+    {
+        $this->client->jsonRequest('GET', '/api/login', [
+            'email' => 'user@test.fr',
+            'password' => 'Password123!',
+        ]);
+
+        $this->assertResponseStatusCodeSame(405);
     }
 
     public function testLoginRejectsWrongPassword(): void
