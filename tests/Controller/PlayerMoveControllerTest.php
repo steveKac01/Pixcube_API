@@ -23,8 +23,6 @@ final class PlayerMoveControllerTest extends WebTestCase
     use CreateUser, CreatePuzzle, CreateGameSession, CreatePlayerGridOneClickToVictory;
     private KernelBrowser $client;
     private EntityManagerInterface $em;
-    private array $validMove = ['x' => 0, 'y' => 0, 'z' => 0];
-    private array $errorMove = ['x' => 1, 'y' => 1, 'z' => 1];
 
     protected function setUp(): void
     {
@@ -46,7 +44,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     public function testControllerRejectGetMethod(): void
     {
         $gameSession = $this->createGame();
-        $this->client->jsonRequest('GET', '/api/games/' . $gameSession->getId() . '/moves', $this->validMove);
+        $this->client->jsonRequest('GET', '/api/games/' . $gameSession->getId() . '/moves', TutorialGrid::$validMove);
 
         $this->assertResponseStatusCodeSame(405);
     }
@@ -61,7 +59,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     #[DataProvider('invalidGameSession')]
     public function testInvalidGameSessionId(string $id): void
     {
-        $this->request($id, $this->validMove);
+        $this->request($id, TutorialGrid::$validMove);
 
         $this->assertResponseStatusCodeSame(404);
     }
@@ -94,7 +92,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     public function testUserGuestCanPlayTutorialGrid(): void
     {
         $gameSession = $this->createGame();
-        $this->request($gameSession->getId(), $this->validMove);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove);
 
         $this->assertResponseStatusCodeSame(200);
     }
@@ -103,7 +101,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     {
         $gameSession = $this->createGame($this->createUser());
 
-        $this->request($gameSession->getId(), $this->validMove);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove);
         $this->assertResponseStatusCodeSame(401);
     }
 
@@ -111,7 +109,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     {
         $gameSession = $this->createGame();
 
-        $this->request($gameSession->getId(), $this->validMove, $this->createUser());
+        $this->request($gameSession->getId(), TutorialGrid::$validMove, $this->createUser());
         $this->assertResponseStatusCodeSame(200);
     }
 
@@ -120,7 +118,7 @@ final class PlayerMoveControllerTest extends WebTestCase
         $user = $this->createUser();
         $gameSession = $this->createGame($user, category: 'Puzzle test');
 
-        $this->request($gameSession->getId(), $this->validMove, $user);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove, $user);
         $this->assertResponseStatusCodeSame(200);
     }
 
@@ -131,7 +129,7 @@ final class PlayerMoveControllerTest extends WebTestCase
 
         $gameSession = $this->createGame($userOwningGameSession, category: 'Puzzle test');
 
-        $this->request($gameSession->getId(), $this->validMove, $user);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove, $user);
         $this->assertResponseStatusCodeSame(403);
     }
 
@@ -139,7 +137,7 @@ final class PlayerMoveControllerTest extends WebTestCase
     {
         $gameSession = $this->createGame(status: GameStatus::VICTORY);
 
-        $this->request($gameSession->getId(), $this->validMove);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove);
         $this->assertResponseStatusCodeSame(409);
     }
 
@@ -149,7 +147,7 @@ final class PlayerMoveControllerTest extends WebTestCase
 
         $gameSession = $this->createGame(errorsCount: $errorsCount);
 
-        $this->request($gameSession->getId(), $this->validMove);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove);
         $response = $this->jsonResponse();
 
         $this->assertArrayHasKey('result', $response);
@@ -164,7 +162,7 @@ final class PlayerMoveControllerTest extends WebTestCase
 
         $gameSession = $this->createGame(errorsCount: $errorsCount);
 
-        $this->request($gameSession->getId(), $this->errorMove);
+        $this->request($gameSession->getId(), TutorialGrid::$errorMove);
         $response = $this->jsonResponse();
 
         $this->assertArrayHasKey('result', $response);
@@ -179,7 +177,7 @@ final class PlayerMoveControllerTest extends WebTestCase
 
         $gameSession = $this->createGame(errorsCount: $errorsCount);
 
-        $this->request($gameSession->getId(), $this->errorMove);
+        $this->request($gameSession->getId(), TutorialGrid::$errorMove);
         $response = $this->jsonResponse();
 
         $this->assertArrayHasKey('result', $response);
@@ -214,12 +212,12 @@ final class PlayerMoveControllerTest extends WebTestCase
     public function testVictoryResponseOnPlayerMove(): void
     {
         $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $this->validMove);
+        $playerGrid = $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), TutorialGrid::$validMove);
         $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
 
-        $gameSession = $this->createGame(playerGrid: $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $this->validMove));
+        $gameSession = $this->createGame(playerGrid: $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), TutorialGrid::$validMove));
 
-        $this->request($gameSession->getId(),  $this->validMove);
+        $this->request($gameSession->getId(),  TutorialGrid::$validMove);
         $response = $this->jsonResponse();
 
         $this->assertSame(0, $response['errorsCount']);
@@ -227,15 +225,15 @@ final class PlayerMoveControllerTest extends WebTestCase
         $this->assertArrayHasKey('name', $response);
         $this->assertSame($puzzle->getName(), $response['name']);
         $this->assertArrayHasKey('objectGrid', $response);
-        $this->assertSame('#feee9f', $response['objectGrid'][1][1][1]); //Fragile to change
+        $this->assertSame('#feee9f', $response['objectGrid'][1][1][1]); // Not ideal, to change
     }
 
     public function testSameMoveOkNoChanges(): void
     {
         $gameSession = $this->createGame();
 
-        $this->request($gameSession->getId(), $this->validMove);
-        $this->request($gameSession->getId(), $this->validMove);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove);
+        $this->request($gameSession->getId(), TutorialGrid::$validMove);
         $response = $this->jsonResponse();
 
         $this->assertSame(0, $response['errorsCount']);
@@ -246,8 +244,8 @@ final class PlayerMoveControllerTest extends WebTestCase
     {
         $gameSession = $this->createGame();
 
-        $this->request($gameSession->getId(), $this->errorMove);
-        $this->request($gameSession->getId(), $this->errorMove);
+        $this->request($gameSession->getId(), TutorialGrid::$errorMove);
+        $this->request($gameSession->getId(), TutorialGrid::$errorMove);
         $response = $this->jsonResponse();
 
         $this->assertSame(1, $response['errorsCount']); // ErrorCount only 1 not 2
