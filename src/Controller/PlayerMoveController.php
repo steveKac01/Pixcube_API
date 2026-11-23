@@ -58,7 +58,7 @@ final class PlayerMoveController extends AbstractController
         $gameSession->applymoveOutcome($moveOutcome);
         $em->flush();
 
-        // Retuns mapped dto
+        // Returns mapped dto
         return $this->json(
             $mapper->map($moveOutcome->moveResult, $gameSession)
         );
