@@ -6,12 +6,14 @@ use App\Game\CubeState;
 use App\Enum\MoveResult;
 use PHPUnit\Framework\TestCase;
 use App\Service\DestroyCube;
+use App\Tests\Support\CreatePlayerGridOneClickToVictory;
 use App\Tests\Support\TutorialGrid;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 
 class DestroyCubeTest extends TestCase
 {
+    use CreatePlayerGridOneClickToVictory;
     /**
      * @return iterable<string, array{array{x:int, y:int, z:int}}>
      */
@@ -120,7 +122,7 @@ class DestroyCubeTest extends TestCase
 
         $outcomeResult = (new DestroyCube())->compute(
             $solutionGrid,
-            $this->playerGridOneClickToVictory($solutionGrid, $cubeDestroyed),
+            $this->createPlayerGridOneClickToVictory($solutionGrid, $cubeDestroyed),
             $currentErrorCount,
             $cubeDestroyed
         );
@@ -137,24 +139,5 @@ class DestroyCubeTest extends TestCase
     private function initialPlayerGrid(): array
     {
         return array_fill(0, 4, array_fill(0, 7, array_fill(0, 3, CubeState::INTACT)));
-    }
-
-    private function playerGridOneClickToVictory(array $solutionGrid, array $lastCube): array
-    {
-        $playerGrid = [];
-
-        foreach ($solutionGrid as $x => $slice) {
-            foreach ($slice as $y => $row) {
-                foreach ($row as $z => $ceil) {
-
-                    $playerGrid[$x][$y][$z] = null === $ceil ? CubeState::DESTROYED : CubeState::INTACT;
-                }
-            }
-        }
-
-        //reset the first cube to let win the player on his next move
-        $playerGrid[$lastCube['x']][$lastCube['y']][$lastCube['z']] = CubeState::INTACT;
-
-        return $playerGrid;
     }
 }

@@ -4,6 +4,8 @@ namespace App\Tests\Support;
 
 final class TutorialGrid
 {
+    public static  array $validMove = ['x' => 0, 'y' => 0, 'z' => 0];
+    public static array $errorMove = ['x' => 1, 'y' => 1, 'z' => 1];
     /**
      * Load the tutorial grid from the json file.
      *
