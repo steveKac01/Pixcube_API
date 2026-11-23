@@ -2,8 +2,11 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\GameSession;
+use App\Entity\User;
 use App\Enum\GameStatus;
 use App\Game\CubeState;
+use App\Helper\PlayerGridInitiate;
 use App\Tests\Support\CreatePlayerGridOneClickToVictory;
 use App\Tests\Support\CreateGameSession;
 use App\Tests\Support\CreatePuzzle;
@@ -13,13 +16,15 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
-
+use Symfony\Component\Uid\Uuid;
 
 final class PlayerMoveControllerTest extends WebTestCase
 {
     use CreateUser, CreatePuzzle, CreateGameSession, CreatePlayerGridOneClickToVictory;
     private KernelBrowser $client;
     private EntityManagerInterface $em;
+    private array $validMove = ['x' => 0, 'y' => 0, 'z' => 0];
+    private array $errorMove = ['x' => 1, 'y' => 1, 'z' => 1];
 
     protected function setUp(): void
     {
@@ -27,196 +32,293 @@ final class PlayerMoveControllerTest extends WebTestCase
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
 
-    private function guestRequest(string $gameSessionId, array $moveCoordinate, ?bool $raw = false): array|string
+    private function request(string $gameSessionId, array $moveCoordinate, ?user $user = null,): void
     {
-        $this->client->jsonRequest('POST', '/api/games/' . $gameSessionId . '/moves', $moveCoordinate);
-
-        return $this->getData($raw);
+        $headers = $user ? ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->createToken($user)] : [];
+        $this->client->jsonRequest('POST', '/api/games/' . $gameSessionId . '/moves', $moveCoordinate, server: $headers);
     }
 
-    private function loggedRequest(string $token, string $gameSessionId, array $moveCoordinate, ?bool $raw = false): array
+    private function jsonResponse(): array
     {
-        $this->client->jsonRequest('POST', '/api/games/' . $gameSessionId . '/moves', $moveCoordinate,  server: [
-            'HTTP_AUTHORIZATION' => 'Bearer ' . $token
-        ]);
-
-        return $this->getData($raw);
-    }
-
-    private function getData(?bool $raw): array|string
-    {
-        if (!$raw) {
-            return  json_decode($this->client->getResponse()->getContent(), true);
-        }
-
-        return $this->client->getResponse()->getContent();
+        return json_decode($this->client->getResponse()->getContent(), true);
     }
 
     public function testControllerRejectGetMethod(): void
     {
-        $tutorialPuzzle = $this->createPuzzle('tutorial', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($tutorialPuzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($tutorialPuzzle, $this->em, null, $playerGrid);
-        $this->client->jsonRequest('GET', '/api/games/' . $gameSession->getId() . '/moves', ['x' => 1, 'y' => 1, 'z' => 1]);
+        $gameSession = $this->createGame();
+        $this->client->jsonRequest('GET', '/api/games/' . $gameSession->getId() . '/moves', $this->validMove);
 
-        $this->assertResponseStatusCodeSame('405');
+        $this->assertResponseStatusCodeSame(405);
     }
 
-    #[DataProvider('wrongPlayerMoves')]
-    public function testWrongPlayerMoveRequest(array $playerMove): void
+    public static function invalidGameSession(): iterable
     {
-        $tutorialPuzzle = $this->createPuzzle('tutorial', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($tutorialPuzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($tutorialPuzzle, $this->em, null, $playerGrid);
-
-        $this->guestRequest($gameSession->getId(), $playerMove);
-
-        $this->assertResponseStatusCodeSame(422);
+        yield 'Invalid game session id' => ['1'];
+        yield 'Invalid game session id with text' => ['text'];
+        yield 'game session with unknown id' =>  [Uuid::v4()->toRfc4122()];
     }
 
-    public function testUserGuestCanPlayTutorialGrid(): void
+    #[DataProvider('invalidGameSession')]
+    public function testInvalidGameSessionId(string $id): void
     {
-        $tutorialPuzzle = $this->createPuzzle('tutorial', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($tutorialPuzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($tutorialPuzzle, $this->em, null, $playerGrid);
-        $this->guestRequest($gameSession->getId(), ['x' => 1, 'y' => 1, 'z' => 1]);
+        $this->request($id, $this->validMove);
 
-        $this->assertResponseStatusCodeSame(200);
+        $this->assertResponseStatusCodeSame(404);
     }
 
-    public function testGuestCanNotPlayPuzzleOtherThanTutorial(): void
-    {
-        $user = $this->createUser();
-
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
-
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid, $user);
-
-        $this->guestRequest($gameSession->getId(), ['x' => 1, 'y' => 1, 'z' => 1]);
-
-        $this->assertResponseStatusCodeSame(401);
-    }
-
-    public function testUserLoggedCanPlayHisGuestSession(): void
-    {
-        $tutorialPuzzle = $this->createPuzzle('tutorial', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($tutorialPuzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($tutorialPuzzle, $this->em, null, $playerGrid);
-        $user = $this->createUser();
-        $token = $this->createToken($user);
-
-        $this->loggedRequest($token, $gameSession->getId(), ['x' => 1, 'y' => 1, 'z' => 1]);
-        $this->assertResponseStatusCodeSame(200);
-    }
-
-    public function testUserCanPlayHisPuzzleWhereLoginIsRequired(): void
-    {
-        $user = $this->createUser();
-        $token = $this->createToken($user);
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid, $user);
-
-        $this->loggedRequest($token, $gameSession->getId(), ['x' => 1, 'y' => 1, 'z' => 1]);
-
-        $this->assertResponseStatusCodeSame(200);
-    }
-
-    public function testUserCanNotPlayAnotherUserPuzzle(): void
-    {
-        $user = $this->createUser();
-        $token = $this->createToken($user);
-        $userOwningGameSession = $this->createUser('another@email.fr');
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
-
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid, $userOwningGameSession);
-
-        $this->loggedRequest($token, $gameSession->getId(), ['x' => 1, 'y' => 1, 'z' => 1]);
-
-        $this->assertResponseStatusCodeSame(403);
-    }
-
-    public function testCanPlayOnlyGameWhereStatusEqualPlaying(): void
-    {
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid, status: GameStatus::VICTORY);
-
-        $this->guestRequest($gameSession->getId(), ['x' => 1, 'y' => 1, 'z' => 1]);
-        $this->assertResponseStatusCodeSame(409);
-    }
-
-    public function testPlayerMoveOutOfBound(): void
-    {
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
-
-        $this->guestRequest($gameSession->getId(), ['x' => 10, 'y' => 1, 'z' => 1]);
-        $this->assertResponseStatusCodeSame(422);
-    }
-
-    public function testOkGameStatusResponseDoesNotLeakInformationPuzzle(): void
-    {
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->initiatePlayerGrid($puzzle->getObjectGrid());
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
-
-        $rawResponse =  $this->guestRequest($gameSession->getId(), ['x' => 0, 'y' => 1, 'z' => 0], true);
-        $response = \json_decode($rawResponse, true);
-
-        $this->assertSame(0, $response['errorsCount']);
-        $this->assertSame('ok', $response['result']);
-        // Important ! No solution leak
-        $this->assertArrayNotHasKey('name', $response);
-        $this->assertArrayNotHasKey('objectGrid', $response);
-        $this->assertStringNotContainsString($puzzle->getName(), $rawResponse);
-        $this->assertStringNotContainsString('#', $rawResponse); // the solution is the only place with hex colors
-    }
-
-    public function testVictoryResponseOnPlayerMove(): void
-    {
-        $playerMove = ['x' => 0, 'y' => 0, 'z' => 0];
-        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
-        $playerGrid = $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $playerMove);
-        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
-
-        $response = $this->guestRequest($gameSession->getId(),  $playerMove);
-
-        $this->assertSame(0, $response['errorsCount']);
-        $this->assertSame('victory', $response['result']);
-        $this->assertArrayHasKey('name', $response);
-        $this->assertArrayHasKey('objectGrid', $response);
-    }
-
-    public static function wrongPlayerMoves(): iterable
+    public static function invalidPlayerMoves(): iterable
     {
         yield 'empty array' => [[]];
         yield 'negative coordinate X ' => [['x' => -1, 'y' => 1, 'z' => 1]];
         yield 'negative coordinate y ' => [['x' => 0, 'y' => -1, 'z' => 1]];
         yield 'negative coordinate z ' => [['x' => 0, 'y' => 1, 'z' => -1]];
+        yield 'invalid type coordinate x ' => [['x' => 'a', 'y' => 1, 'z' => -1]];
+        yield 'missing coordinate x ' => [['x' => '1', 'y' => 1]];
+        yield 'out of bound coordinate' => [['x' => 20, 'y' => 1, 'z' => 1]];
     }
 
-    private function initiatePlayerGrid(array $solutionGrid): array
+    #[DataProvider('invalidPlayerMoves')]
+    public function testWrongPlayerMoveRequest(array $playerMove): void
     {
+        $gameSession = $this->createGame();
 
-        $sizeX = count($solutionGrid);
-        $sizeY = count($solutionGrid[0] ?? []);
-        $sizeZ = count($solutionGrid[0][0] ?? []);
+        $this->request($gameSession->getId(), $playerMove);
+        $this->assertResponseStatusCodeSame(422);
 
-        $playerGrid = [];
-
-        for ($x = 0; $x < $sizeX; $x++) {
-            for ($y = 0; $y < $sizeY; $y++) {
-                for ($z = 0; $z < $sizeZ; $z++) {
-                    $playerGrid[$x][$y][$z] = CubeState::INTACT;
-                }
-            }
-        }
-
-        return $playerGrid;
+        // Nothing changes in bdd
+        $saved = $this->reload($gameSession);
+        $this->assertSame($gameSession->getErrorsCount(), $saved->getErrorsCount());
+        $this->assertSame($gameSession->getPlayerGrid(), $saved->getPlayerGrid());
     }
 
+    public function testUserGuestCanPlayTutorialGrid(): void
+    {
+        $gameSession = $this->createGame();
+        $this->request($gameSession->getId(), $this->validMove);
+
+        $this->assertResponseStatusCodeSame(200);
+    }
+
+    public function testGuestCannotPlayAGameThatBelongsToAUser(): void
+    {
+        $gameSession = $this->createGame($this->createUser());
+
+        $this->request($gameSession->getId(), $this->validMove);
+        $this->assertResponseStatusCodeSame(401);
+    }
+
+    public function testLoggedUserCanPlayAGuestGame(): void
+    {
+        $gameSession = $this->createGame();
+
+        $this->request($gameSession->getId(), $this->validMove, $this->createUser());
+        $this->assertResponseStatusCodeSame(200);
+    }
+
+    public function testOwnerCanPlayTheirGame(): void
+    {
+        $user = $this->createUser();
+        $gameSession = $this->createGame($user, category: 'Puzzle test');
+
+        $this->request($gameSession->getId(), $this->validMove, $user);
+        $this->assertResponseStatusCodeSame(200);
+    }
+
+    public function testUserCannotPlayAnotherUsersGame(): void
+    {
+        $user = $this->createUser();
+        $userOwningGameSession = $this->createUser('another@email.fr');
+
+        $gameSession = $this->createGame($userOwningGameSession, category: 'Puzzle test');
+
+        $this->request($gameSession->getId(), $this->validMove, $user);
+        $this->assertResponseStatusCodeSame(403);
+    }
+
+    public function testMoveOnAFinishedGameIsRejected(): void
+    {
+        $gameSession = $this->createGame(status: GameStatus::VICTORY);
+
+        $this->request($gameSession->getId(), $this->validMove);
+        $this->assertResponseStatusCodeSame(409);
+    }
+
+    public function testGameStatusOkGiveValidResponse(): void
+    {
+        $errorsCount = 1;
+
+        $gameSession = $this->createGame(errorsCount: $errorsCount);
+
+        $this->request($gameSession->getId(), $this->validMove);
+        $response = $this->jsonResponse();
+
+        $this->assertArrayHasKey('result', $response);
+        $this->assertArrayHasKey('errorsCount', $response);
+        $this->assertSame($errorsCount, $response['errorsCount']);
+        $this->assertSame('ok', $response['result']);
+    }
+
+    public function testGameStatusErrorGiveValidResponse(): void
+    {
+        $errorsCount = 1;
+
+        $gameSession = $this->createGame(errorsCount: $errorsCount);
+
+        $this->request($gameSession->getId(), $this->errorMove);
+        $response = $this->jsonResponse();
+
+        $this->assertArrayHasKey('result', $response);
+        $this->assertArrayHasKey('errorsCount', $response);
+        $this->assertSame($errorsCount + 1, $response['errorsCount']);
+        $this->assertSame('error', $response['result']);
+    }
+
+    public function testGameStatusGameOverGiveValidResponse(): void
+    {
+        $errorsCount = 2;
+
+        $gameSession = $this->createGame(errorsCount: $errorsCount);
+
+        $this->request($gameSession->getId(), $this->errorMove);
+        $response = $this->jsonResponse();
+
+        $this->assertArrayHasKey('result', $response);
+        $this->assertArrayHasKey('errorsCount', $response);
+        $this->assertSame($errorsCount + 1, $response['errorsCount']);
+        $this->assertSame('game-over', $response['result']);
+    }
+
+    public static function movesWithoutVictory(): iterable
+    {
+        yield 'ok' => [['x' => 0, 'y' => 0, 'z' => 0], 0];
+        yield 'error' => [['x' => 1, 'y' => 1, 'z' => 1], 0];
+        yield 'game over' => [['x' => 1, 'y' => 1, 'z' => 1], 2];
+    }
+
+    #[DataProvider('movesWithoutVictory')]
+    public function testNoMoveButTheWinningOneRevealsTheSolution(array $move, int $errorsCount): void
+    {
+        $gameSession = $this->createGame(errorsCount: $errorsCount);
+
+        $this->request($gameSession->getId(), $move);
+        $response = $this->jsonResponse();
+        $rawResponse = $this->client->getResponse()->getContent();
+
+        // Important ! No solution leak
+        $this->assertArrayNotHasKey('name', $response);
+        $this->assertArrayNotHasKey('objectGrid', $response);
+        $this->assertStringNotContainsString($gameSession->getPuzzle()->getName(), $rawResponse);
+        $this->assertStringNotContainsString('#', $rawResponse); // the solution is the only place with hex colors
+    }
+
+    public function testVictoryResponseOnPlayerMove(): void
+    {
+        $puzzle = $this->createPuzzle('Puzzle test', TutorialGrid::load(), $this->em);
+        $playerGrid = $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $this->validMove);
+        $gameSession = $this->createGameSession($puzzle, $this->em, null, $playerGrid);
+
+        $gameSession = $this->createGame(playerGrid: $this->createPlayerGridOneClickToVictory($puzzle->getObjectGrid(), $this->validMove));
+
+        $this->request($gameSession->getId(),  $this->validMove);
+        $response = $this->jsonResponse();
+
+        $this->assertSame(0, $response['errorsCount']);
+        $this->assertSame('victory', $response['result']);
+        $this->assertArrayHasKey('name', $response);
+        $this->assertSame($puzzle->getName(), $response['name']);
+        $this->assertArrayHasKey('objectGrid', $response);
+        $this->assertSame('#feee9f', $response['objectGrid'][1][1][1]); //Fragile to change
+    }
+
+    public function testSameMoveOkNoChanges(): void
+    {
+        $gameSession = $this->createGame();
+
+        $this->request($gameSession->getId(), $this->validMove);
+        $this->request($gameSession->getId(), $this->validMove);
+        $response = $this->jsonResponse();
+
+        $this->assertSame(0, $response['errorsCount']);
+        $this->assertSame('ok', $response['result']);
+    }
+
+    public function testSameErrorMoveNoChanges(): void
+    {
+        $gameSession = $this->createGame();
+
+        $this->request($gameSession->getId(), $this->errorMove);
+        $this->request($gameSession->getId(), $this->errorMove);
+        $response = $this->jsonResponse();
+
+        $this->assertSame(1, $response['errorsCount']); // ErrorCount only 1 not 2
+        $this->assertSame('error', $response['result']);
+    }
+
+    public function testGoodMoveIsSaved(): void
+    {
+        $game = $this->createGame();
+
+        $this->playMove($game, ['x' => 0, 'y' => 0, 'z' => 0]);
+
+        $saved = $this->reload($game);
+        $this->assertSame(CubeState::DESTROYED, $saved->getPlayerGrid()[0][0][0]);
+        $this->assertSame(0, $saved->getErrorsCount());
+    }
+
+    public function testWrongMoveLocksTheCubeAndCountsAnError(): void
+    {
+        $game = $this->createGame();
+
+        $this->playMove($game, ['x' => 1, 'y' => 1, 'z' => 1]);
+
+        $this->assertSame('error', $this->jsonResponse()['result']);
+        $saved = $this->reload($game);
+        $this->assertSame(CubeState::LOCKED, $saved->getPlayerGrid()[1][1][1]);
+        $this->assertSame(1, $saved->getErrorsCount());
+    }
+
+    public function testThirdErrorEndsTheGame(): void
+    {
+        $game = $this->createGame(errorsCount: 2);
+
+        $this->playMove($game, ['x' => 1, 'y' => 1, 'z' => 1]);
+
+        $this->assertSame('game-over', $this->jsonResponse()['result']);
+        $saved = $this->reload($game);
+        $this->assertSame(GameStatus::GAMEOVER, $saved->getStatus());
+        $this->assertNotNull($saved->getFinishedAt());
+    }
+
+    private function playMove(GameSession $game, array $move, ?User $as = null): void
+    {
+        $server = $as ? ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->createToken($as)] : [];
+
+        $this->client->jsonRequest('POST', '/api/games/' . $game->getId() . '/moves', $move, $server);
+    }
+
+    private function reload(GameSession $gameSession): GameSession
+    {
+        $this->em->clear(); // forces a real read from the database
+
+        return $this->em->find(GameSession::class, $gameSession->getId());
+    }
+
+    private function createGame(
+        ?User $owner = null,
+        GameStatus $status = GameStatus::PLAYING,
+        int $errorsCount = 0,
+        ?array $playerGrid = null,
+        string $category = 'tutorial',
+    ): GameSession {
+        $puzzle = $this->createPuzzle($category, TutorialGrid::load(), $this->em);
+
+        return $this->createGameSession(
+            $puzzle,
+            $this->em,
+            playerGrid: $playerGrid ?? (new PlayerGridInitiate())->compute($puzzle->getObjectGrid()),
+            user: $owner,
+            status: $status,
+            errorsCount: $errorsCount,
+        );
+    }
 }
