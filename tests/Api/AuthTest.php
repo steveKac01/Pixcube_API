@@ -109,6 +109,15 @@ class AuthTest extends WebTestCase
         $this->assertResponseStatusCodeSame(401);
     }
 
+    public function testMeRouteErrorWithBadToken(): void
+    {
+        $this->client->request('GET', '/api/me', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer notAToken',
+        ]);
+
+        $this->assertResponseStatusCodeSame(401);
+    }
+
     public function testMeRouteReturnsCurrentUserInfos(): void
     {
         $this->register();
