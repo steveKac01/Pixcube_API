@@ -102,24 +102,26 @@ class AuthTest extends WebTestCase
         $this->assertResponseStatusCodeSame(401);
     }
 
-    public function testProtectedRouteRequiresToken(): void
+    public function testMeRouteRequiresToken(): void
     {
-        $this->client->request('GET', '/api/protected');
+        $this->client->request('GET', '/api/me');
 
         $this->assertResponseStatusCodeSame(401);
     }
 
-    public function testProtectedRouteReturnsCurrentUser(): void
+    public function testMeRouteReturnsCurrentUserInfos(): void
     {
         $this->register();
         $this->login();
         $token = $this->getData()['token'];
 
-        $this->client->request('GET', '/api/protected', server: [
+        $this->client->request('GET', '/api/me', server: [
             'HTTP_AUTHORIZATION' => 'Bearer ' . $token,
         ]);
 
         $this->assertResponseStatusCodeSame(200);
         $this->assertSame(self::EMAIL, $this->getData()['email']);
+        $this->assertArrayHasKey('roles', $this->getData());
+        $this->assertContains('ROLE_USER', $this->getData()['roles']);
     }
 }
