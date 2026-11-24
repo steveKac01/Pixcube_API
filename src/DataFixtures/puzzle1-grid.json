@@ -1,0 +1,56 @@
+[
+  [
+    [null, null, null, null, null],
+    [null, "#ec2237", "#ec2237", "#ec2237", null],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    [null, null, null, null, null],
+    [null, null, null, null, null],
+    [null, null, "#00cc3d", null, null]
+  ],
+  [
+    [null, null, "#c92233", null, null],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    [null, "#ec2237", "#ec2237", "#ec2237", null],
+    [null, null, "#018e2b", null, null],
+    [null, null, "#00cc3d", null, null]
+  ],
+  [
+    [null, "#c92233", "#c92233", "#c92233", null],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#da2537"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    [null, null, "#018e2b", null, null],
+    [null, null, null, null, null]
+  ],
+  [
+    [null, "#c92233", "#c92233", "#c92233", null],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#da2537"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#da2537"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#ec2237"],
+    [null, null, "#8a5700", null, null],
+    [null, null, "#8a5700", null, null]
+  ],
+  [
+    [null, null, "#c92233", null, null],
+    ["#ec2237", "#da2537", "#da2537", "#da2537", "#da2537"],
+    ["#ec2237", "#ec2237", "#ec2237", "#da2537", "#da2537"],
+    ["#ec2237", "#ec2237", "#ec2237", "#ec2237", "#da2537"],
+    [null, "#ec2237", "#ec2237", "#ec2237", null],
+    [null, null, null, null, null],
+    [null, null, null, null, null]
+  ],
+  [
+    [null, null, null, null, null],
+    [null, "#da2537", "#da2537", "#da2537", null],
+    ["#ec2237", "#da2537", "#da2537", "#da2537", null],
+    ["#da2537", "#da2537", "#da2537", "#da2537", "#da2537"],
+    [null, null, null, null, null],
+    [null, null, null, null, null],
+    [null, null, null, null, null]
+  ]
+]
