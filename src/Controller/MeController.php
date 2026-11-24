@@ -6,11 +6,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 
-final class ProtectedController extends AbstractController
+final class MeController extends AbstractController
 {
-    #[Route('/api/protected', name: 'app_protected')]
+    #[Route('/api/me', name: 'app_me')]
     public function index(): JsonResponse
     {
-        return new JsonResponse(['email' => $this->getUser()->getUserIdentifier()]);
+        return new JsonResponse([
+            'email' => $this->getUser()->getUserIdentifier(),
+            'roles' => $this->getUser()->getRoles()
+        ]);
     }
 }
