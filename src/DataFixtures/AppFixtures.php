@@ -7,9 +7,12 @@ use App\Entity\Puzzle;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
+    public function __construct(private UserPasswordHasherInterface $hasher) {}
+
     public function load(ObjectManager $manager): void
     {
         // The fixtures run at every container start: do nothing if the tutorial is already there
@@ -50,8 +53,9 @@ class AppFixtures extends Fixture
         }
 
         $user = (new User())
-            ->setEmail('test@email.fr')
-            ->setPassword('Pass1234!');
+            ->setEmail('test@email.fr');
+        $user->setPassword($this->hasher->hashPassword($user, 'Pass1234!'));
+
 
         $manager->persist($user);
 
