@@ -1,0 +1,58 @@
+[
+  [
+    [null, null, null, null, null, null],
+    [null, "#000000", "#000000", "#000000", null, null],
+    [null, "#000000", "#000000", "#000000", null, null],
+    [null, null, "#646e73", null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null]
+  ],
+  [
+    ["#000000", "#000000", "#000000", "#000000", "#000000", null],
+    ["#000000", "#000000", "#000000", "#000000", "#000000", null],
+    ["#000000", "#000000", "#000000", "#000000", "#000000", null],
+    [null, "#646e73", "#646e73", "#646e73", null, null],
+    [null, null, "#646e73", null, null, null],
+    [null, null, null, null, null, null]
+  ],
+  [
+    ["#1972e6", "#1972e6", "#1972e6", "#1972e6", "#1972e6", null],
+    ["#1972e6", "#000000", "#000000", "#000000", "#1972e6", null],
+    ["#1972e6", "#1972e6", "#1972e6", "#1972e6", "#1972e6", null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, "#646e73", null, null, null]
+  ],
+  [
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, "#646e73", null, null, null]
+  ],
+  [
+    ["#1972e6", "#1972e6", "#1972e6", "#1972e6", "#1972e6", null],
+    ["#1972e6", "#000000", "#000000", "#000000", "#1972e6", null],
+    ["#1972e6", "#1972e6", "#1972e6", "#1972e6", "#1972e6", null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, "#646e73", null, null, null]
+  ],
+  [
+    ["#000000", "#000000", "#000000", "#000000", "#000000", null],
+    ["#000000", "#000000", "#000000", "#000000", "#000000", null],
+    ["#000000", "#000000", "#000000", "#000000", "#000000", null],
+    [null, "#646e73", "#646e73", "#646e73", null, null],
+    [null, null, "#646e73", null, null, null],
+    [null, null, null, null, null, null]
+  ],
+  [
+    [null, null, null, null, null, null],
+    [null, "#000000", "#000000", "#000000", null, null],
+    [null, "#000000", "#000000", "#000000", null, null],
+    [null, null, "#646e73", null, null, null],
+    [null, null, null, null, null, null],
+    [null, null, null, null, null, null]
+  ]
+]
