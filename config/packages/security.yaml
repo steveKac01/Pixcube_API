@@ -17,25 +17,27 @@ security:
             pattern: ^/(_profiler(/|$)|(_wdt|assets|build)/)
             security: false
 
-        login:
-            pattern: ^/api/login
+        api:
+            pattern: ^/api
             stateless: true
+            entry_point: jwt
             json_login:
-                check_path: /api/login
+                check_path: /api/login # or, if you have defined a route for your login path, the route name you used
                 username_path: email
                 password_path: password
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
-
-        api:
-            pattern: ^/api
-            stateless: true
             jwt: ~
+            refresh_jwt:
+                check_path: api_refresh_token # or, you may use the `api_refresh_token` route name
+                # or if you have more than one user provider
+                # provider: user_provider_name
 
     # Note: Only the *first* matching rule is applied
     access_control:
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/token/refresh, roles: PUBLIC_ACCESS }
         - { path: ^/api/games, roles: PUBLIC_ACCESS }
         - { path: ^/api/health, roles: PUBLIC_ACCESS }
         - { path: ^/api/admin, roles: ROLE_ADMIN }
