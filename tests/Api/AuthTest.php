@@ -74,13 +74,14 @@ class AuthTest extends WebTestCase
         $this->assertResponseStatusCodeSame(422);
     }
 
-    public function testLoginReturnsToken(): void
+    public function testLoginReturnsTokens(): void
     {
         $this->register();
         $this->login();
 
         $this->assertResponseStatusCodeSame(200);
         $this->assertArrayHasKey('token', $this->getData());
+        $this->assertArrayHasKey('refresh_token', $this->getData());
     }
 
     public function testLoginRejectGetMethod(): void
@@ -105,6 +106,39 @@ class AuthTest extends WebTestCase
     public function testMeRouteRequiresToken(): void
     {
         $this->client->request('GET', '/api/me');
+
+        $this->assertResponseStatusCodeSame(401);
+    }
+
+    public function testRouteRefreshTokenGiveNewToken(): void
+    {
+        $this->register();
+        $this->login();
+        $token = $this->getData()['token'];
+        $refresh_token = $this->getData()['refresh_token'];
+
+        sleep(1); // For let the timestamp change
+
+        // Utilisation de jsonRequest pour envoyer le refresh_token au format JSON
+        $this->client->jsonRequest('POST', '/api/token/refresh', [
+            'refresh_token' => $refresh_token
+        ]);
+
+        $data = $this->getData();
+
+        $this->assertResponseIsSuccessful();
+        $this->assertArrayHasKey('refresh_token', $data);
+        $this->assertArrayHasKey('token', $data);
+        $this->assertNotSame($token, $data['token']);
+        $this->assertNotEmpty($data['refresh_token']);
+    }
+
+
+    public function testRouteRefreshRejectInvalidRefreshToken(): void
+    {
+        $this->client->jsonRequest('POST', '/api/token/refresh', [
+            'refresh_token' => 'invalid_token'
+        ]);
 
         $this->assertResponseStatusCodeSame(401);
     }

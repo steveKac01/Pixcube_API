@@ -15,5 +15,4 @@ api_login_check:
     methods: [POST]
 
 api_refresh_token:
-  path: /api/token/refresh
-  controller: gesdinet.jwtrefreshtoken:refresh
+    path: /api/token/refresh
